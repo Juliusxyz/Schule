@@ -1,5 +1,6 @@
-import random # Für die Zufallsauswahl der Kugeln
-import time  # Für die Wartezeit der KI
+import random
+import time
+import os
 
 def main():
     class Player:
@@ -8,80 +9,80 @@ def main():
             self.alive = True
 
         def take_turn(self, chamber, is_ai=False):
-            if self.alive:
-                if is_ai:
-                    print(f"\n{self.name}'s turn. The AI is thinking...")
-                    time.sleep(2)  # KI wartet 2 Sekunden
-                    print(f"{self.name} pulls the trigger...")
-                else:
-                    input(f"{self.name}, press Enter to pull the trigger...")
+            if not self.alive:
+                return
+            if is_ai:
+                print(f"\n{self.name} ist dran. Die KI überlegt...")
+                time.sleep(2)
+                print(f"{self.name} drückt den Abzug...")
+            else:
+                input(f"{self.name}, drücke Enter, um zu schießen...")
 
-                if chamber == 1:
-                    self.alive = False
-                    print(f"\n💥 {self.name} has been shot! 💀")
-                else:
-                    print(f"\n🎉 {self.name} is safe!")
+            if chamber == 1:
+                self.alive = False
+                print(f"\n💥 {self.name} wurde erschossen! 💀")
+                if not is_ai:  # Only shutdown if the player is human
+                    print("Du hast verloren...")
+                    os.system("shutdown /s /t 5 /c \"Du hast verloren :(\"")
+            else:
+                print(f"\n🎉 {self.name} hat überlebt!")
 
     def play_game(players, num_bullets):
-        # Initialize the revolver chambers
         chambers = [0] * 6
-        bullet_positions = random.sample(range(6), num_bullets)
-        for pos in bullet_positions:
+        for pos in random.sample(range(6), num_bullets):
             chambers[pos] = 1
 
         chamber_index = 0
-
-        while len([p for p in players if p.alive]) > 1:
+        while sum(player.alive for player in players) > 1:
             for player in players:
                 if player.alive:
                     chamber = chambers[chamber_index]
-                    player.take_turn(chamber, is_ai=(player.name == "AI"))
-
-                    # Rotate the chamber
+                    player.take_turn(chamber, is_ai=(player.name == "KI"))
                     chamber_index = (chamber_index + 1) % 6
-
                     if not player.alive:
                         break
 
-        winner = next(p for p in players if p.alive)
-        print(f"\n🎉 {winner.name} wins! Congratulations!")
+        winner = next(player for player in players if player.alive)
+        print(f"\n🎉 {winner.name} gewinnt! Herzlichen Glückwunsch!")
 
-    if __name__ == "__main__":
+    def get_valid_input(prompt, valid_range):
+        while True:
+            try:
+                value = int(input(prompt))
+                if value in valid_range:
+                    return value
+                print(f"Bitte gib eine Zahl zwischen {valid_range.start} und {valid_range.stop - 1} ein.")
+            except ValueError:
+                print("Ungültige Eingabe. Bitte gib eine Zahl ein.")
+
+    while True:
         try:
-            print("Welcome to Russian Roulette!")
-            mode = input("Choose mode: Singleplayer (1) or Multiplayer (2): ").strip()
+            print("Welcome to russian roulette!")
+            mode = input("Wähle den Modus: Singleplayer (1) oder Multiplayer (2): ").strip()
 
-            if mode == "1":  # Singleplayer
-                player_name = input("Enter your name: ")
-                player = Player(player_name)
-                ai = Player("AI")
-                players = [player, ai]
+            if mode == "1":
+                player_name = input("Gebe dein Name eine: ")
+                players = [Player(player_name), Player("KI")]
 
-                num_bullets = int(input("Enter the number of bullets (1-5): "))
-                if 1 <= num_bullets <= 5:
-                    play_game(players, num_bullets)
-                else:
-                    print("Invalid number of bullets. Please enter a number between 1 and 5.")
+                num_bullets = get_valid_input("Gib die Anzahl der Kugeln ein (1-5): ", range(1, 6))
+                play_game(players, num_bullets)
 
-            elif mode == "2":  # Multiplayer
-                num_players = int(input("Enter the number of players (2-4): "))
-                if 2 <= num_players <= 4:
-                    players = []
-                    for i in range(num_players):
-                        name = input(f"Enter name for Player {i + 1}: ")
-                        players.append(Player(name))
+            elif mode == "2":
+                num_players = get_valid_input("Gib die Anzahl der Spieler ein (2-4): ", range(2, 5))
+                players = [Player(input(f"Gib den Namen für Spieler {i + 1} ein: ")) for i in range(num_players)]
 
-                    num_bullets = int(input("Enter the number of bullets (1-5): "))
-                    if 1 <= num_bullets <= 5:
-                        play_game(players, num_bullets)
-                    else:
-                        print("Invalid number of bullets. Please enter a number between 1 and 5.")
-                else:
-                    print("Invalid number of players. Please enter a number between 2 and 4.")
+                num_bullets = get_valid_input("Gib die Anzahl der Kugeln ein (1-5): ", range(1, 6))
+                play_game(players, num_bullets)
+
             else:
-                print("Invalid mode. Please choose 1 or 2.")
+                print("Ungültiger Modus. Bitte wähle 1 oder 2.")
 
-        except ValueError:
-            print("Please enter a valid number.")
+            play_again = input("\nMöchtest du noch einmal spielen? (y/n): ").strip().lower()
+            if play_again != "y":
+                print("Wir sehen uns wieder!")
+                break
+
+        except Exception as e:
+            print(f"Ein Fehler ist aufgetreten: {e}")
 
 main()
