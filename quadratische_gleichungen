@@ -1,0 +1,24 @@
+import math
+
+def solve_quadratic(a, b, c):
+    keineahnung = b**2 - 4*a*c
+    
+    if keineahnung > 0:
+        root1 = (-b + math.sqrt(keineahnung)) / (2*a)
+        root2 = (-b - math.sqrt(keineahnung)) / (2*a)
+        return root1, root2
+    elif keineahnung == 0:
+        root = -b / (2*a)
+        return root,
+    else:
+        real_part = -b / (2*a)
+        imaginary_part = math.sqrt(abs(keineahnung)) / (2*a)
+        return (real_part + imaginary_part * 1j, real_part - imaginary_part * 1j)
+
+# Benutzereingabe
+a = float(input("Geben Sie den Koeffizienten a ein: "))
+b = float(input("Geben Sie den Koeffizienten b ein: "))
+c = float(input("Geben Sie den Koeffizienten c ein: "))
+
+loesungen = solve_quadratic(a, b, c)
+print("Lösungen:", loesungen)
